@@ -1,14 +1,22 @@
 const repository = require('../dbRepo/repository')
 var md5 = require('md5');
+const config = require('../config/config') 
+var security = require('../utilities/security')
+const jwt = require('jsonwebtoken')
 
 exports.pingHandler = async (req, res) => {
     res.send({ "Status": "200 OK" })
 }
 
 exports.getHandler = async (req, res) => {
+    
     try {
-        console.log(req.params.userId)
-        const user = await repository.getUser(req.params.userId);        
+        const token = req.headers[ "token" ];
+        if (token){
+            tokenDetails = security(token)
+        }
+        const user = await repository.getUser(tokenDetails._id); 
+        user.encryptedPwd = ""; 
         res.send(user);
     }
     catch (err) {
@@ -18,7 +26,10 @@ exports.getHandler = async (req, res) => {
 
 exports.insertHandler = async (req, res) => {
     try {
-        req.body.encryptedPwd = md5(req.body.encryptedPwd )
+        req.body.encryptedPwd = md5(req.body.password)
+        if (await repository.userExists(req.body.email)){
+            throw(`User already exists`);
+        }
         await repository.registerUser(req.body);
         res.set({
             'Content-Type': 'application/json',
@@ -31,3 +42,57 @@ exports.insertHandler = async (req, res) => {
     }
 }
 
+exports.loginHandler = async(req,res)=>{
+    try{
+        const user = await repository.authenticateUser(req.body.email, md5(req.body.password))
+        const token = jwt.sign(user.toObject(), config.secretKey, { expiresIn: 86400 });
+        res.set({
+            'Content-Type': 'application/json',
+            'Status' : 200
+            })
+        res.send({ "code": 200, "message":"User authenticated successfully", "token":token})
+    }
+    catch (err) {
+        console.log(`Invalid user details`);
+        console.log(err);
+        res.status(405).json({code: 405,  message:"Couldn't authenticate user"})
+    }
+}
+
+exports.updateHandler = async (req,res)=>{
+    try{
+        const token = req.headers[ "token" ];
+        if (token){
+            tokenDetails = security(token)
+        }
+        await repository.updateUser(tokenDetails._id,req.body);
+        res.set({
+            'Content-Type': 'application/json',
+            'Status' : 200})
+        res.send({ "code": 200, "message":"User details updated successfully"})
+            
+        }catch(err){
+            console.log(`Error in updating user`);
+            console.log(err);
+        res.status(405).json({code: 405,  message:"Couldn't update user"})
+    }
+}
+
+exports.deleteHandler = async(req,res)=>{
+    try{
+        const token = req.headers[ "token" ];
+        if (token){
+            tokenDetails = security(token)
+        }
+
+        await repository.deleteUser(tokenDetails._id);
+        res.set({
+            'content-Type':'application/json',
+            'Status':200})
+            res.send({ "code": 200, "message":"User deleted successfully"})
+        }catch(err){
+            console.log(`Error in deleting user`);
+            console.log(err);
+        res.status(405).json({code: 405,  message:"Couldn't deleting user"})
+    }
+}

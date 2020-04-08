@@ -5,7 +5,10 @@ const express = require('express');
 const router = express.Router();
 
 router.get("/ping", controller.pingHandler);
-router.get("/:userId", controller.getHandler);
+router.get("/", controller.getHandler);
 router.post("/", controller.insertHandler)
+router.put("/", controller.updateHandler)
+router.delete("/", controller.deleteHandler)
+router.post("/login",controller.loginHandler)
 
 module.exports = router;

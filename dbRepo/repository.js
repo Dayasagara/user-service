@@ -12,9 +12,9 @@ async function registerUser(userData) {
     await user.save();
 }
 
-function userExists(email){
-    const _id = User.findOne({email:email, IsDeleted:false}, {_id:1})
-    if (_id){
+async function userExists(email){
+    const user = await User.find({email:email, IsDeleted:false}, {_id:1})
+    if (user.length>0){
         return true
     }
     return false
@@ -31,7 +31,7 @@ async function updateUser(userId, user){
 }
 
 async function deleteUser(userId){
-    const result = User.updateOne({_id:userId},{$set: {IsDeleted:true}})
+    const result = await User.update({_id:userId},{$set: {IsDeleted:true}})
 }
 
 module.exports={getUser, registerUser,updateUser, authenticateUser, userExists, deleteUser};

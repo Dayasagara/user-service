@@ -1,3 +1,4 @@
 *modules
 dbCreds.json
 config.json
+*.log

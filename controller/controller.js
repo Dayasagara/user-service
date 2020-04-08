@@ -3,13 +3,13 @@ var md5 = require('md5');
 const config = require('../config/config') 
 var security = require('../utilities/security')
 const jwt = require('jsonwebtoken')
+const logger = require('../utilities/logger')
 
 exports.pingHandler = async (req, res) => {
     res.send({ "Status": "200 OK" })
 }
 
 exports.getHandler = async (req, res) => {
-    
     try {
         const token = req.headers[ "token" ];
         if (token){
@@ -36,8 +36,7 @@ exports.insertHandler = async (req, res) => {
             'Status' : 201})
         res.send({ "code": 201, "message":"User created successfully"})
     } catch (err) {
-        console.log(`Error in creating user`);
-        console.log(err);
+        logger.error(`Error in creating user: `, err);
         res.status(405).json({code: 405,  message:"Couldn't create user"})
     }
 }
@@ -53,8 +52,7 @@ exports.loginHandler = async(req,res)=>{
         res.send({ "code": 200, "message":"User authenticated successfully", "token":token})
     }
     catch (err) {
-        console.log(`Invalid user details`);
-        console.log(err);
+        logger.error(`Invalid user details:`, err);
         res.status(405).json({code: 405,  message:"Couldn't authenticate user"})
     }
 }
@@ -72,9 +70,8 @@ exports.updateHandler = async (req,res)=>{
         res.send({ "code": 200, "message":"User details updated successfully"})
             
         }catch(err){
-            console.log(`Error in updating user`);
-            console.log(err);
-        res.status(405).json({code: 405,  message:"Couldn't update user"})
+            logger.error(`Error in updating user`, err);
+            res.status(405).json({code: 405,  message:"Couldn't update user"})
     }
 }
 
@@ -91,8 +88,7 @@ exports.deleteHandler = async(req,res)=>{
             'Status':200})
             res.send({ "code": 200, "message":"User deleted successfully"})
         }catch(err){
-            console.log(`Error in deleting user`);
-            console.log(err);
-        res.status(405).json({code: 405,  message:"Couldn't deleting user"})
+            logger.error(`Error in deleting user`, err);
+            res.status(405).json({code: 405,  message:"Couldn't deleting user"})
     }
 }

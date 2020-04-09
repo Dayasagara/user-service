@@ -2,8 +2,14 @@ const mongoose = require('mongoose');
 mongoose.set('debug', true);
 const User = mongoose.model("users");
 
-const getUser =  (userId) => {
-    const user = User.findOne({ "_id": userId , "IsDeleted":false});
+async function getUser (userId) {
+    const user = await User.findOne({ "_id": userId , "IsDeleted":false});
+    return user;
+}
+
+
+async function getUserByEmail (email) {
+    const user = await User.findOne({ "email": email , "IsDeleted":false});
     return user;
 }
 
@@ -34,4 +40,4 @@ async function deleteUser(userId){
     const result = await User.update({_id:userId},{$set: {IsDeleted:true}})
 }
 
-module.exports={getUser, registerUser,updateUser, authenticateUser, userExists, deleteUser};
+module.exports={getUser, registerUser,updateUser, authenticateUser, userExists, deleteUser, getUserByEmail};

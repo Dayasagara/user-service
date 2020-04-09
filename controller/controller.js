@@ -1,5 +1,5 @@
 const repository = require('../dbRepo/repository')
-var md5 = require('md5');
+var bcrypt = require('bcrypt');
 const config = require('../config/config') 
 var security = require('../utilities/security')
 const jwt = require('jsonwebtoken')
@@ -26,7 +26,7 @@ exports.getHandler = async (req, res) => {
 
 exports.insertHandler = async (req, res) => {
     try {
-        req.body.encryptedPwd = md5(req.body.password)
+        req.body.encryptedPwd = bcrypt.hashSync(req.body.password, 10);
         if (await repository.userExists(req.body.email)){
             throw(`User already exists`);
         }
@@ -43,13 +43,17 @@ exports.insertHandler = async (req, res) => {
 
 exports.loginHandler = async(req,res)=>{
     try{
-        const user = await repository.authenticateUser(req.body.email, md5(req.body.password))
-        const token = jwt.sign(user.toObject(), config.secretKey, { expiresIn: 86400 });
-        res.set({
-            'Content-Type': 'application/json',
-            'Status' : 200
+        const user = await repository.getUserByEmail(req.body.email)
+        if (await bcrypt.compare(req.body.password, user.encryptedPwd)) {
+            const token = jwt.sign(user.toObject(), config.secretKey, { expiresIn: 86400 });
+            res.set({
+                'Content-Type': 'application/json',
+                'Status' : 200
             })
-        res.send({ "code": 200, "message":"User authenticated successfully", "token":token})
+            res.send({ "code": 200, "message":"User authenticated successfully", "token":token})
+        }else{
+            throw("Invalid credentials")
+        }
     }
     catch (err) {
         logger.error(`Invalid user details:`, err);
